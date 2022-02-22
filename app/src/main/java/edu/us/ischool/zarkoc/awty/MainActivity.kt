@@ -1,14 +1,34 @@
 package edu.us.ischool.zarkoc.awty
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.telephony.SmsManager
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import java.io.File
 import java.util.*
 
+
+
 class MainActivity : AppCompatActivity() {
+    var permissionGranted : Boolean = false
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            1 -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    permissionGranted = true
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -18,6 +38,14 @@ class MainActivity : AppCompatActivity() {
         val inputPhone : EditText = findViewById<EditText>(R.id.inputPhone)
         val inputInterval : EditText = findViewById<EditText>(R.id.inputInterval)
         var messageTimer : Timer = Timer()
+
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(
+                Manifest.permission.SEND_SMS
+            ),
+            1
+        )
 
         startButton.setOnClickListener {
 
@@ -35,6 +63,10 @@ class MainActivity : AppCompatActivity() {
                     messageTimer.schedule(object : TimerTask() {
                         override fun run() {
                             Log.i("TESTING", "SCHEDULE WORKING")
+                            if (permissionGranted) {
+                                val smsManager: SmsManager = SmsManager.getDefault()
+                                smsManager.sendTextMessage(inputPhone.text.toString(), null, inputMessage.text.toString(), null, null)
+                            }
                             this@MainActivity.runOnUiThread(java.lang.Runnable {
                                 Toast.makeText(applicationContext, text, duration).show()
                             })
